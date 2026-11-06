@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MixMedia App</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fontsource-poppins@5.0.0/index.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+    overflow-x: hidden;
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Page Container */
+  .page { display: none; min-height: 100vh; padding-bottom: 75px; }
+  .page.active { display: block; }
+
+  /* ===== HOME PAGE (Video Feed) ===== */
+  .home-page { position: relative; height: 100vh; overflow: hidden; padding-bottom: 75px; }
+  .video-container {
+    position: relative;
+    height: calc(100vh - 75px);
+    overflow: hidden;
+    background: #000;
+  }
+  .video-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #1a1a2e 100%);
+  }
+  .kitchen-scene {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #2a1f1a 0%, #1a1510 100%);
+  }
+  .fridge {
+    position: absolute;
+    left: 0; top: 10%;
+    width: 35%; height: 80%;
+    background: linear-gradient(90deg, #c0c0c0, #e8e8e8, #c0c0c0);
+    border-radius: 4px;
+  }
+  .fridge-inner {
+    position: absolute;
+    left: 5%; top: 5%;
+    width: 85%; height: 90%;
+    background: linear-gradient(180deg, #f0f0f0, #d8d8d8);
+    border-radius: 2px;
+  }
+  .fridge-shelf {
+    position: absolute;
+    left: 5%; right: 5%;
+    height: 2px;
+    background: #bbb;
+  }
+  .fridge-light {
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 30%;
+    background: linear-gradient(180deg, rgba(255,255,200,0.3), transparent);
+  }
+  .person-silhouette {
+    position: absolute;
+    right: 10%; bottom: 5%;
+    width: 50%; height: 85%;
+    background: linear-gradient(180deg, #3a3a4a, #2a2a3a);
+    border-radius: 40px 40px 0 0;
+    opacity: 0.8;
+  }
+  .cake-hold {
+    position: absolute;
+    right: 25%; bottom: 35%;
+    width: 18%; height: 12%;
+    background: linear-gradient(180deg, #fff, #f5f0e8);
+    border-radius: 8px 8px 4px 4px;
+    box-shadow: 0 0 10px rgba(255,200,200,0.3);
+  }
+  .cake-top {
+    position: absolute;
+    top: -4px; left: 10%; right: 10%;
+    height: 6px;
+    background: #e74c3c;
+    border-radius: 3px;
+  }
+  .clock-wall {
+    position: absolute;
+    right: 20%; top: 15%;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid #888;
+    background: #222;
+  }
+  .video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 60%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* Top Tabs */
+  .top-tabs {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 10px;
+    z-index: 50;
+  }
+  .feed-tab {
+    padding: 8px 18px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.4);
+    color: #ccc;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .feed-tab.active {
+    background: #f5a623;
+    color: #000;
+    border-color: #f5a623;
+  }
+  .sound-toggle {
+    margin-left: auto;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .sound-toggle svg { width: 22px; height: 22px; fill: #f5a623; }
+
+  /* Play/Pause overlay */
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .play-icon-big {
+    width: 70px; height: 70px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .play-icon-big.show { opacity: 1; }
+  .play-icon-big svg { width: 35px; height: 35px; fill: #fff; margin-left: 4px; }
+
+  /* Right Side Actions */
+  .right-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    z-index: 20;
+  }
+  .profile-pic-feed {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2.5px solid #f5a623;
+    overflow: hidden;
+    cursor: pointer;
+    background: linear-gradient(135deg, #1a1a3e, #0a0a2e);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-pic-feed svg { width: 28px; height: 28px; }
+  .feed-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .feed-action-btn:active { transform: scale(0.85); }
+  .feed-action-btn svg { width: 30px; height: 30px; }
+  .feed-action-btn .count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .feed-action-btn.liked svg { fill: #e74c3c; }
+  .share-btn-feed svg { fill: #25D366; }
+
+  /* Bottom Info */
+  .bottom-feed-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 60px;
+    padding: 0 16px 10px;
+    z-index: 20;
+  }
+  .sound-info-feed {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.5);
+    border: 1.5px solid rgba(245,166,35,0.4);
+    border-radius: 25px;
+    padding: 8px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .sound-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 18px;
+  }
+  .sound-bar {
+    width: 3px;
+    background: #f5a623;
+    border-radius: 2px;
+    animation: soundPulse 0.8s ease-in-out infinite alternate;
+  }
+  .sound-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .sound-bar:nth-child(2) { height: 14px; animation-delay: 0.2s; }
+  .sound-bar:nth-child(3) { height: 10px; animation-delay: 0.4s; }
+  .sound-bar:nth-child(4) { height: 16px; animation-delay: 0.1s; }
+  .sound-bar:nth-child(5) { height: 6px; animation-delay: 0.3s; }
+  @keyframes soundPulse {
+    0% { transform: scaleY(0.5); }
+    100% { transform: scaleY(1); }
+  }
+  .sound-info-text {
+    font-size: 13px;
+    color: #f5a623;
+    font-weight: 500;
+  }
+  .creator-info-feed {
+    margin-bottom: 10px;
+  }
+  .creator-name-feed {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .creator-label-feed {
+    font-size: 13px;
+    color: #aaa;
+    margin-left: 6px;
+  }
+  .comment-input-feed {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(245,166,35,0.3);
+    border-radius: 25px;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .comment-input-feed svg { width: 20px; height: 20px; fill: #f5a623; margin-right: 10px; flex-shrink: 0; }
+  .comment-input-feed span { color: #888; font-size: 14px; }
+  .progress-wrap-feed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pause-btn-feed {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .pause-btn-feed svg { width: 16px; height: 16px; fill: #fff; }
+  .progress-bar-container-feed {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+  .progress-bar-fill-feed {
+    height: 100%;
+    background: #f5a623;
+    border-radius: 2px;
+    width: 0%;
+    position: relative;
+  }
+  .progress-dot-feed {
+    position: absolute;
+    right: -6px; top: 50%;
+    transform: translateY(-50%);
+    width: 12px; height: 12px;
+    background: #f5a623;
+    border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .time-display-feed {
+    font-size: 12px;
+    color: #ccc;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Double tap heart */
+  .double-tap-heart {
+    position: absolute;
+    font-size: 100px;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .double-tap-heart.show { opacity: 1; transform: scale(1); }
+  .double-tap-heart.fade { opacity: 0; transform: scale(1.5); }
+
+  /* ===== MESSAGES PAGE ===== */
+  .messages-page { background: #0a0a0a; }
+  .messages-header {
+    padding: 16px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .messages-header-left h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .messages-header-left p {
+    font-size: 13px;
+    color: #888;
+  }
+  .messages-compose-btn {
+    width: 44px; height: 44px;
+    background: rgba(245,166,35,0.15);
+    border: 1.5px solid rgba(245,166,35,0.4);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .messages-compose-btn svg { width: 22px; height: 22px; fill: #f5a623; }
+  .messages-search {
+    margin: 0 16px 16px;
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .messages-search svg { width: 20px; height: 20px; fill: #666; flex-shrink: 0; }
+  .messages-search input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+  }
+  .messages-search input::placeholder { color: #666; }
+  .messages-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+  }
+  .messages-empty-icon {
+    width: 64px; height: 64px;
+    background: rgba(245,166,35,0.1);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .messages-empty-icon svg { width: 32px; height: 32px; fill: #f5a623; }
+  .messages-empty h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .messages-empty p {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  /* ===== PROFILE PAGE ===== */
+  .profile-page { background: #0a0a0a; }
+  .profile-top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px 6px;
+    position: sticky;
+    top: 0;
+    background: #0a0a0a;
+    z-index: 100;
+    gap: 6px;
+  }
+  .profile-back-btn {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .profile-back-btn svg { width: 22px; height: 22px; fill: #fff; }
+  .profile-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+  .profile-wallet-btn, .profile-arts-btn, .profile-login-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 22px;
+    padding: 7px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1.5px solid;
+  }
+  .profile-wallet-btn { background: rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.45); }
+  .profile-wallet-btn svg { width: 17px; height: 17px; fill: #f5a623; }
+  .profile-wallet-btn span { color: #f5a623; font-size: 13px; font-weight: 700; }
+  .profile-arts-btn { background: rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.45); }
+  .profile-arts-btn svg { width: 15px; height: 15px; fill: #f5a623; }
+  .profile-arts-btn span { color: #f5a623; font-size: 12px; font-weight: 600; }
+  .profile-login-btn { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); }
+  .profile-login-btn svg { width: 15px; height: 15px; fill: #818cf8; }
+  .profile-login-btn span { color: #818cf8; font-size: 12px; font-weight: 600; }
+  .profile-icon-btn {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .profile-icon-btn svg { width: 22px; height: 22px; fill: #fff; }
+
+  .profile-section {
+    display: flex;
+    align-items: center;
+    padding: 14px 14px 10px;
+    gap: 14px;
+  }
+  .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+  .profile-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 3px solid #f5a623;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a3e, #0a0a2e);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .profile-avatar svg { width: 48px; height: 48px; }
+  .camera-badge {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 26px; height: 26px;
+    background: #f5a623;
+    border-radius: 50%;
+    border: 2.5px solid #0a0a0a;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .camera-badge svg { width: 14px; height: 14px; fill: #000; }
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-display-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+    word-break: break-word;
+  }
+  .profile-display-handle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .profile-display-email {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+    word-break: break-all;
+  }
+  .profile-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .status-pending { background: rgba(245,166,35,0.15); color: #f5a623; border: 1px solid rgba(245,166,35,0.4); }
+  .status-approved { background: rgba(0,200,150,0.15); color: #00c896; border: 1px solid rgba(0,200,150,0.4); }
+  .status-none { background: rgba(255,255,255,0.08); color: #888; border: 1px solid rgba(255,255,255,0.15); }
+  .profile-creator-id {
+    font-size: 12px;
+    color: #f5a623;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .stats-row {
+    display: flex;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin: 6px 0;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 14px 8px;
+    position: relative;
+  }
+  .stat-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 20%; bottom: 20%;
+    width: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+  .stat-num { font-size: 22px; font-weight: 800; color: #fff; }
+  .stat-label { font-size: 10px; color: #888; font-weight: 600; letter-spacing: 1.2px; margin-top: 2px; }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    padding: 14px 14px;
+  }
+  .action-btn-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+  }
+  .action-btn-main:active { transform: scale(0.95); }
+  .btn-creator {
+    background: rgba(99,102,241,0.15);
+    border: 1.5px solid rgba(99,102,241,0.5) !important;
+    color: #818cf8;
+  }
+  .btn-creator svg { width: 18px; height: 18px; fill: #818cf8; }
+  .btn-edit {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.15) !important;
+    color: #fff;
+  }
+  .btn-promote {
+    background: rgba(245,166,35,0.12);
+    border: 1.5px solid rgba(245,166,35,0.5) !important;
+    color: #f5a623;
+  }
+  .btn-promote svg { width: 18px; height: 18px; fill: #f5a623; }
+
+  .profile-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    cursor: pointer;
+    position: relative;
+  }
+  .tab-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 25%; right: 25%;
+    height: 3px;
+    background: #f5a623;
+    border-radius: 2px 2px 0 0;
+  }
+  .tab-item svg { width: 24px; height: 24px; }
+  .tab-item.active svg { fill: #f5a623; stroke: none; }
+  .tab-item:not(.active) svg { fill: none; stroke: #666; stroke-width: 2; }
+
+  .empty-posts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #666;
+  }
+  .empty-posts svg { width: 64px; height: 64px; fill: #333; margin-bottom: 16px; }
+  .empty-posts .empty-title { font-size: 16px; font-weight: 700; color: #888; margin-bottom: 6px; }
+  .empty-posts .empty-sub { font-size: 13px; color: #555; }
+
+  /* ===== ANALYTICS PAGE ===== */
+  .analytics-page { background: #0a0a0a; }
+  .analytics-header-section {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .analytics-studio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #f5a623;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+  .analytics-studio-label svg { width: 20px; height: 20px; fill: #f5a623; }
+  .analytics-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .analytics-perf-card {
+    margin: 16px;
+    background: linear-gradient(135deg, #1a1a2e, #151528);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .analytics-perf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .analytics-perf-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f5a623;
+    letter-spacing: 1px;
+  }
+  .analytics-perf-title svg { width: 18px; height: 18px; fill: #f5a623; }
+  .analytics-uploads {
+    font-size: 13px;
+    color: #888;
+    font-family: monospace;
+  }
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .analytics-stat-card {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .analytics-stat-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+  }
+  .analytics-stat-icon svg { width: 24px; height: 24px; }
+  .icon-views { background: rgba(245,166,35,0.15); border: 1px solid rgba(245,166,35,0.3); }
+  .icon-views svg { fill: #f5a623; }
+  .icon-watch { background: rgba(0,200,150,0.15); border: 1px solid rgba(0,200,150,0.3); }
+  .icon-watch svg { fill: #00c896; }
+  .icon-likes { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.3); }
+  .icon-likes svg { fill: #e74c3c; }
+  .icon-shares { background: rgba(52,152,219,0.15); border: 1px solid rgba(52,152,219,0.3); }
+  .icon-shares svg { fill: #3498db; }
+  .analytics-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .analytics-stat-value.green { color: #00c896; }
+  .analytics-stat-label {
+    font-size: 11px;
+    color: #888;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ===== BOTTOM NAV (Always Visible) ===== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 0 14px;
+    background: #0a0a0a;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    z-index: 1000;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    padding: 4px 12px;
+  }
+  .nav-btn svg { width: 26px; height: 26px; }
+  .nav-btn.active svg { fill: #f5a623; stroke: none; }
+  .nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    width: 5px; height: 5px;
+    background: #f5a623;
+    border-radius: 50%;
+  }
+  .nav-create {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f5a623, #e6951a);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(245,166,35,0.4);
+  }
+  .nav-create svg { width: 30px; height: 30px; fill: #000; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-content {
+    background: #1a1a2e;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 30px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .modal-overlay.open .modal-content { transform: translateY(0); }
+  .modal-header {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 3px;
+    background: #f5a623;
+    border-radius: 2px;
+  }
+  .modal-cancel {
+    text-align: center;
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* Upload Modal */
+  .upload-modal {
+    background: #111118;
+    border-radius: 20px 20px 0 0;
+    padding: 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .modal-overlay.open .upload-modal { transform: translateY(0); }
+  .upload-header {
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .upload-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+  .upload-title { font-size: 22px; font-weight: 800; color: #fff; }
+  .upload-close-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+  .upload-close-btn svg { width: 18px; height: 18px; fill: #fff; }
+  .upload-subtitle { font-size: 13px; color: #888; line-height: 1.5; }
+
+  .upload-type-tabs { display: flex; gap: 10px; padding: 16px 20px; }
+  .upload-type-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1.5px solid;
+  }
+  .upload-type-tab.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+  .upload-type-tab:not(.active) { background: transparent; border-color: rgba(255,255,255,0.1); color: #888; }
+  .upload-type-tab svg { width: 18px; height: 18px; }
+
+  .upload-area {
+    margin: 0 20px 16px;
+    border: 2px dashed rgba(245,166,35,0.4);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    background: rgba(245,166,35,0.03);
+  }
+  .upload-icon-box {
+    width: 64px; height: 64px;
+    background: rgba(245,166,35,0.15);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+  }
+  .upload-icon-box svg { width: 32px; height: 32px; fill: #f5a623; }
+  .upload-area-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .upload-area-desc { font-size: 12px; color: #888; line-height: 1.5; margin-bottom: 20px; }
+  .upload-select-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 10px;
+  }
+  .upload-select-btn svg { width: 20px; height: 20px; fill: #f5a623; }
+
+  .upload-section { padding: 0 20px; margin-bottom: 16px; }
+  .upload-section-label { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+  .upload-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+  }
+  .upload-textarea::placeholder { color: #555; }
+
+  .sound-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .sound-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: #fff; }
+  .sound-title svg { width: 18px; height: 18px; fill: #f5a623; }
+  .sound-attach { font-size: 13px; color: #f5a623; font-weight: 600; cursor: pointer; }
+  .sound-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+  }
+
+  .series-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .series-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: #fff; flex: 1; }
+  .series-title svg { width: 18px; height: 18px; fill: #f5a623; }
+  .series-new { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #f5a623; font-weight: 600; cursor: pointer; }
+  .series-new svg { width: 16px; height: 16px; fill: #f5a623; }
+  .series-select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  .series-select option { background: #1a1a2e; color: #fff; }
+
+  .publish-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 8px;
+  }
+  .publish-cancel-btn {
+    flex: 1;
+    padding: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .publish-now-btn {
+    flex: 2;
+    padding: 14px;
+    background: linear-gradient(135deg, #f5a623, #e6951a);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .publish-now-btn svg { width: 18px; height: 18px; fill: #000; }
+
+  .file-preview {
+    display: none;
+    margin: 0 20px 16px;
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .file-preview.show { display: flex; align-items: center; gap: 12px; }
+  .file-preview-icon {
+    width: 48px; height: 48px;
+    background: rgba(245,166,35,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .file-preview-icon svg { width: 24px; height: 24px; fill: #f5a623; }
+  .file-preview-info { flex: 1; min-width: 0; }
+  .file-preview-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-preview-size { font-size: 11px; color: #888; }
+  .file-preview-remove {
+    width: 28px; height: 28px;
+    background: rgba(231,76,60,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .file-preview-remove svg { width: 14px; height: 14px; fill: #e74c3c; }
+
+  .hidden-file-input { display: none; }
+
+  /* Creator Form */
+  .creator-form-section { margin-bottom: 14px; }
+  .creator-form-section label {
+    display: block;
+    font-size: 11px;
+    color: #818cf8;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .creator-form-section label .required { color: #e74c3c; }
+  .creator-form-section input,
+  .creator-form-section select,
+  .creator-form-section textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: #fff;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+  }
+  .creator-form-section input:focus,
+  .creator-form-section select:focus,
+  .creator-form-section textarea:focus { border-color: #818cf8; }
+  .creator-form-section select option { background: #1a1a2e; color: #fff; }
+  .creator-form-section textarea { resize: vertical; min-height: 70px; }
+
+  .live-creator-id-box {
+    background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+    border: 2px dashed rgba(139,92,246,0.5);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    margin: 16px 0;
+    transition: all 0.3s;
+  }
+  .live-creator-id-box.active {
+    border-style: solid;
+    border-color: rgba(139,92,246,0.7);
+    background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18));
+  }
+  .live-creator-id-box .live-label {
+    font-size: 10px;
+    color: #818cf8;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .live-creator-id-box .live-id {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 2px;
+    font-family: monospace;
+    min-height: 32px;
+  }
+  .live-creator-id-box .live-id.placeholder {
+    color: #555;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0;
+  }
+  .live-creator-id-box .live-hint { font-size: 10px; color: #666; margin-top: 6px; }
+
+  .checkbox-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 10px;
+    margin: 14px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-wrap:active { background: rgba(99,102,241,0.15); }
+  .custom-checkbox {
+    width: 22px; height: 22px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.05);
+    margin-top: 1px;
+  }
+  .checkbox-wrap.checked .custom-checkbox { background: #818cf8; border-color: #818cf8; }
+  .custom-checkbox svg {
+    width: 14px; height: 14px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+  }
+  .checkbox-wrap.checked .custom-checkbox svg { opacity: 1; transform: scale(1); }
+  .checkbox-wrap .checkbox-text { font-size: 12px; color: #ccc; line-height: 1.5; flex: 1; }
+
+  .save-creator-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 6px;
+  }
+
+  .creator-id-display {
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+    border: 2px solid rgba(139,92,246,0.4);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin: 14px 0;
+  }
+  .creator-id-display .label { font-size: 11px; color: #818cf8; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px; }
+  .creator-id-display .id-value { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: 2px; font-family: monospace; }
+  .creator-id-display .status-text { font-size: 12px; color: #f5a623; font-weight: 700; margin-top: 6px; letter-spacing: 1px; }
+
+  .admin-pending-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .admin-pending-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .admin-pending-name { font-size: 14px; font-weight: 700; color: #fff; }
+  .admin-pending-id { font-size: 11px; color: #818cf8; font-family: monospace; }
+  .admin-pending-details { font-size: 11px; color: #888; line-height: 1.6; margin-bottom: 10px; }
+  .admin-pending-details span { color: #ccc; }
+  .admin-actions { display: flex; gap: 8px; }
+  .admin-approve-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(0,200,150,0.15);
+    border: 1px solid rgba(0,200,150,0.4);
+    border-radius: 8px;
+    color: #00c896;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .admin-reject-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(231,76,60,0.15);
+    border: 1px solid rgba(231,76,60,0.4);
+    border-radius: 8px;
+    color: #e74c3c;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 100px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(245,166,35,0.95);
+    color: #000;
+    padding: 10px 22px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 3000;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- ===== HOME PAGE (Video Feed) ===== -->
+<div class="page home-page active" id="homePage">
+  <div class="video-container" id="videoContainer">
+    <div class="video-bg"></div>
+    <div class="kitchen-scene">
+      <div class="fridge">
+        <div class="fridge-inner">
+          <div class="fridge-light"></div>
+          <div class="fridge-shelf" style="top:30%"></div>
+          <div class="fridge-shelf" style="top:55%"></div>
+          <div class="fridge-shelf" style="top:80%"></div>
+        </div>
+      </div>
+      <div class="person-silhouette"></div>
+      <div class="cake-hold"><div class="cake-top"></div></div>
+      <div class="clock-wall"></div>
+    </div>
+    <div class="video-overlay"></div>
+
+    <!-- Top Tabs -->
+    <div class="top-tabs">
+      <div class="feed-tab active" onclick="switchFeedTab(this)">For You</div>
+      <div class="feed-tab" onclick="switchFeedTab(this)">🔥 Trending</div>
+      <div class="feed-tab" onclick="switchFeedTab(this)">🎵 Music</div>
+      <div class="sound-toggle" onclick="toggleSound(this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </div>
+    </div>
+
+    <!-- Play/Pause Overlay -->
+    <div class="play-overlay" id="playOverlay">
+      <div class="play-icon-big" id="playIconBig">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    </div>
+
+    <div class="double-tap-heart" id="doubleTapHeart">❤️</div>
+
+    <!-- Right Side Actions -->
+    <div class="right-actions">
+      <div class="profile-pic-feed" onclick="switchToProfile()">
+        <svg viewBox="0 0 24 24" fill="#f5a623">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        </svg>
+      </div>
+      <div class="feed-action-btn" onclick="showViews()">
+        <svg viewBox="0 0 24 24" fill="#fff">
+          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+        </svg>
+        <span class="count" id="viewCount">107</span>
+      </div>
+      <div class="feed-action-btn" id="likeBtn" onclick="toggleLike()">
+        <svg class="heart-svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span class="count" id="likeCount">0</span>
+      </div>
+      <div class="feed-action-btn" onclick="openComments()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span class="count" id="commentCount">0</span>
+      </div>
+      <div class="feed-action-btn share-btn-feed" onclick="shareVideo()">
+        <svg viewBox="0 0 24 24" fill="#25D366">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        <span class="count">Share</span>
+      </div>
+    </div>
+
+    <!-- Bottom Feed Info -->
+    <div class="bottom-feed-info">
+      <div class="sound-info-feed">
+        <div class="sound-bars">
+          <div class="sound-bar"></div>
+          <div class="sound-bar"></div>
+          <div class="sound-bar"></div>
+          <div class="sound-bar"></div>
+          <div class="sound-bar"></div>
+        </div>
+        <span class="sound-info-text">Original Sound - by @vincentlibin487</span>
+      </div>
+      <div class="creator-info-feed">
+        <span class="creator-name-feed">@vincentlibin487</span>
+        <span class="creator-label-feed">· Creator</span>
+      </div>
+      <div class="comment-input-feed" onclick="openComments()">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="#f5a623" stroke-width="2"/></svg>
+        <span>Add a comment...</span>
+      </div>
+      <div class="progress-wrap-feed">
+        <div class="pause-btn-feed" id="pauseBtn" onclick="togglePlay()">
+          <svg viewBox="0 0 24 24" id="pauseIcon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </div>
+        <div class="progress-bar-container-feed" id="progressBar" onclick="seekVideo(event)">
+          <div class="progress-bar-fill-feed" id="progressFill">
+            <div class="progress-dot-feed"></div>
+          </div>
+        </div>
+        <span class="time-display-feed" id="timeDisplay">0:00 / 0:30</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MESSAGES PAGE ===== -->
+<div class="page messages-page" id="messagesPage">
+  <div class="messages-header">
+    <div class="messages-header-left">
+      <h1>Messages</h1>
+      <p>@vincentlibin487</p>
+    </div>
+    <div class="messages-compose-btn" onclick="showToast('✏️ New message')">
+      <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+    </div>
+  </div>
+  <div class="messages-search">
+    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input type="text" placeholder="Search creators or messages...">
+  </div>
+  <div class="messages-empty">
+    <div class="messages-empty-icon">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+    </div>
+    <h3>No conversations yet</h3>
+    <p>Select any creator to start a direct conversation.</p>
+  </div>
+</div>
+
+<!-- ===== PROFILE PAGE ===== -->
+<div class="page profile-page" id="profilePage">
+  <div class="profile-top-header">
+    <div class="profile-back-btn" onclick="showToast('← Going back...')">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    </div>
+    <div class="profile-header-actions">
+      <div class="profile-wallet-btn" onclick="showToast('💰 Wallet: ₹0')">
+        <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        <span>₹0</span>
+      </div>
+      <div class="profile-arts-btn" onclick="showToast('🎨 Arts Section')">
+        <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        <span>Arts</span>
+      </div>
+      <div class="profile-login-btn" onclick="showToast('🔐 Login')">
+        <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+        <span>Login</span>
+      </div>
+      <div class="profile-icon-btn" onclick="showToast('🔔 Notifications')">
+        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      </div>
+      <div class="profile-icon-btn" onclick="showToast('📤 Share')">
+        <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar" id="profileAvatar">
+        <svg viewBox="0 0 24 24" fill="#f5a623">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        </svg>
+      </div>
+      <div class="camera-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      </div>
+    </div>
+    <div class="profile-info">
+      <div class="profile-display-name" id="profileDisplayName">Your Channel Name</div>
+      <div class="profile-display-handle" id="profileDisplayHandle">@username</div>
+      <div class="profile-display-email" id="profileDisplayEmail"></div>
+      <div class="profile-status-badge status-none" id="profileStatusBadge">
+        <span id="profileStatusText">Not a Creator</span>
+      </div>
+      <div class="profile-creator-id" id="profileCreatorId" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num" id="statPosts">0</div><div class="stat-label">POSTS</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">FOLLOWERS</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">FOLLOWING</div></div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="action-btn-main btn-creator" onclick="openCreatorForm()">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      CREATOR
+    </button>
+    <button class="action-btn-main btn-edit" onclick="showToast('✏️ Edit Profile')">EDIT</button>
+    <button class="action-btn-main btn-promote" onclick="showToast('📢 Promote Ad')">
+      <svg viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h1v4h2v-4h1l5 4v-3.18C14.16 16.3 15.06 15 15.73 13.68 16.61 11.94 17 10 17 8c0-.34-.02-.67-.05-1H4zm11.5 3c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/></svg>
+      PROMOTE AD
+    </button>
+  </div>
+
+  <div class="profile-tabs">
+    <div class="tab-item active">
+      <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+    </div>
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z"/></svg>
+    </div>
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+    </div>
+  </div>
+
+  <div class="empty-posts">
+    <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+    <div class="empty-title">No Posts Yet</div>
+    <div class="empty-sub">Create your first post to get started!</div>
+  </div>
+</div>
+
+<!-- ===== ANALYTICS PAGE ===== -->
+<div class="page analytics-page" id="analyticsPage">
+  <div style="padding:20px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.08);">
+    <div class="analytics-studio-label">
+      <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+      CREATOR STUDIO
+    </div>
+    <div class="analytics-title">My Private Analytics</div>
+  </div>
+  <div class="analytics-perf-card">
+    <div class="analytics-perf-header">
+      <div class="analytics-perf-title">
+        <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+        CHANNEL PERFORMANCE
+      </div>
+      <div class="analytics-uploads" id="analyticsUploads">0 Uploads Total</div>
+    </div>
+    <div class="analytics-grid">
+      <div class="analytics-stat-card">
+        <div class="analytics-stat-icon icon-views">
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        </div>
+        <div class="analytics-stat-value">0</div>
+        <div class="analytics-stat-label">TOTAL VIEWS</div>
+      </div>
+      <div class="analytics-stat-card">
+        <div class="analytics-stat-icon icon-watch">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+        </div>
+        <div class="analytics-stat-value green">0 Mins</div>
+        <div class="analytics-stat-label">WATCH TIME</div>
+      </div>
+      <div class="analytics-stat-card">
+        <div class="analytics-stat-icon icon-likes">
+          <svg viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z"/></svg>
+        </div>
+        <div class="analytics-stat-value">0</div>
+        <div class="analytics-stat-label">TOTAL LIKES</div>
+      </div>
+      <div class="analytics-stat-card">
+        <div class="analytics-stat-icon icon-shares">
+          <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+        </div>
+        <div class="analytics-stat-value">0</div>
+        <div class="analytics-stat-label">TOTAL SHARES</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV (Always Visible) ===== -->
+<div class="bottom-nav">
+  <div class="nav-btn active" id="navHome" onclick="switchPage('home')">
+    <svg viewBox="0 0 24 24" fill="#f5a623"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+  </div>
+  <div class="nav-btn" id="navMessages" onclick="switchPage('messages')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </div>
+  <div class="nav-create" onclick="openUploadModal()">
+    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+  </div>
+  <div class="nav-btn" id="navAnalytics" onclick="switchPage('analytics')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+  </div>
+  <div class="nav-btn" id="navProfile" onclick="switchPage('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </div>
+</div>
+
+<!-- ===== UPLOAD MODAL ===== -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="upload-modal">
+    <div class="upload-header">
+      <div class="upload-header-top">
+        <div class="upload-title">Upload to MixMedia</div>
+        <div class="upload-close-btn" onclick="closeUploadModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </div>
+      </div>
+      <div class="upload-subtitle">Publishes directly to the global cloud feed · Visible on every device & shared link</div>
+    </div>
+    <div class="upload-type-tabs">
+      <div class="upload-type-tab active" id="tabRegular" onclick="switchUploadTab('regular')">
+        <svg viewBox="0 0 24 24" fill="#f5a623"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        Regular Reel
+      </div>
+      <div class="upload-type-tab" id="tabPromote" onclick="switchUploadTab('promote')">
+        <div class="tab-promote">
+          <span>📢 Free Ad / Promote</span>
+        </div>
+      </div>
+    </div>
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon-box">
+        <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+      </div>
+      <div class="upload-area-title">Choose from Gallery</div>
+      <div class="upload-area-desc">Reels & Videos up to 3:00 (180s · 720p HD) or JPG, PNG Image</div>
+      <button class="upload-select-btn" onclick="selectVideo()">
+        <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        Select Video (Up to 3 Mins)
+      </button>
+      <button class="upload-select-btn" onclick="selectPhoto()">
+        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        Select Gallery Photo / Poster
+      </button>
+    </div>
+    <div class="file-preview" id="filePreview">
+      <div class="file-preview-icon">
+        <svg viewBox="0 0 24 24" id="filePreviewIconSvg"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+      </div>
+      <div class="file-preview-info">
+        <div class="file-preview-name" id="filePreviewName">filename.mp4</div>
+        <div class="file-preview-size" id="filePreviewSize">2.4 MB</div>
+      </div>
+      <div class="file-preview-remove" onclick="removeFile()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </div>
+    </div>
+    <div class="upload-section">
+      <div class="upload-section-label">Video / Reel Caption</div>
+      <textarea class="upload-textarea" id="uploadCaption" placeholder="Write a story caption, scene note, or hashtags..."></textarea>
+    </div>
+    <div class="upload-section">
+      <div class="sound-header">
+        <div class="sound-title">
+          <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          Sound / Audio Title
+        </div>
+        <div class="sound-attach" onclick="attachAudio()">+ Attach Audio File</div>
+      </div>
+      <input type="text" class="sound-input" id="soundTitle" value="Original Sound - by @vincentlibin487" placeholder="Enter sound title...">
+    </div>
+    <div class="upload-section">
+      <div class="series-header">
+        <div class="series-title">
+          <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+          Episodic Series (Up to 3 mins / episode)
+        </div>
+        <div class="series-new" onclick="newSeries()">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          New Series
+        </div>
+      </div>
+      <select class="series-select" id="seriesSelect">
+        <option>Main Reels Feed — Short Video (Up to 3:00)</option>
+        <option>Series 1 — Episode 1</option>
+        <option>Series 1 — Episode 2</option>
+      </select>
+    </div>
+    <div class="publish-actions">
+      <button class="publish-cancel-btn" onclick="closeUploadModal()">Cancel</button>
+      <button class="publish-now-btn" onclick="publishNow()">
+        <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        Publish Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden File Inputs -->
+<input type="file" id="videoFileInput" class="hidden-file-input" accept="video/*" onchange="handleVideoSelect(event)">
+<input type="file" id="photoFileInput" class="hidden-file-input" accept="image/*" onchange="handlePhotoSelect(event)">
+<input type="file" id="audioFileInput" class="hidden-file-input" accept="audio/*" onchange="handleAudioSelect(event)">
+
+<!-- ===== CREATOR FORM MODAL ===== -->
+<div class="modal-overlay" id="creatorModal">
+  <div class="modal-content">
+    <div class="modal-header">🎬 Creator Registration</div>
+    <div class="creator-form-section">
+      <label>Creator / Channel Name <span class="required">*</span></label>
+      <input type="text" id="creatorName" placeholder="Enter your channel name" oninput="updateLiveCreatorId()">
+    </div>
+    <div class="creator-form-section">
+      <label>Handle (@username) <span class="required">*</span></label>
+      <input type="text" id="creatorHandle" placeholder="@yourusername">
+    </div>
+    <div class="creator-form-section">
+      <label>Mobile / WhatsApp Number <span class="required">*</span></label>
+      <input type="tel" id="creatorMobile" placeholder="+91 XXXXXXXXXX" maxlength="13">
+    </div>
+    <div class="creator-form-section">
+      <label>Login Gmail ID <span class="required">*</span></label>
+      <input type="email" id="creatorEmail" placeholder="your@gmail.com">
+    </div>
+    <div class="creator-form-section">
+      <label>What Type of Videos Do You Post? <span class="required">*</span></label>
+      <select id="creatorCategory">
+        <option value="">-- Select Category --</option>
+        <option>Short Films & Acting</option>
+        <option>Comedy</option>
+        <option>Drama</option>
+        <option>Music Videos</option>
+        <option>Dance</option>
+        <option>Vlogs</option>
+        <option>Educational</option>
+        <option>Gaming</option>
+        <option>Cooking</option>
+        <option>Fashion & Beauty</option>
+        <option>Sports</option>
+        <option>News</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="creator-form-section">
+      <label>Primary Video Language <span class="required">*</span></label>
+      <select id="creatorLanguage">
+        <option value="">-- Select Language --</option>
+        <option>Malayalam</option>
+        <option>Tamil</option>
+        <option>Hindi</option>
+        <option>English</option>
+        <option>Telugu</option>
+        <option>Kannada</option>
+        <option>Bengali</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="creator-form-section">
+      <label>About Your Videos & Content Details <span class="required">*</span></label>
+      <textarea id="creatorAbout" placeholder="Describe the types of videos you create..."></textarea>
+    </div>
+    <div class="live-creator-id-box" id="liveCreatorIdBox">
+      <div class="live-label">🆔 YOUR CREATOR ID (AUTO-GENERATED)</div>
+      <div class="live-id placeholder" id="liveCreatorId">Enter name to generate ID</div>
+      <div class="live-hint">Format: FirstLetter + Batch + LastLetter + Sequence</div>
+    </div>
+    <div class="checkbox-wrap" id="agreeCheckboxWrap" onclick="toggleAgreeCheckbox(event)">
+      <div class="custom-checkbox">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="checkbox-text">I confirm that I upload original content and agree to follow all community guidelines.</div>
+    </div>
+    <button class="save-creator-btn" onclick="handleCreatorSubmit()">🚀 Submit Creator Application</button>
+    <div class="modal-cancel" onclick="closeModal('creatorModal')">Cancel</div>
+  </div>
+</div>
+
+<!-- Creator ID Result Modal -->
+<div class="modal-overlay" id="creatorIdModal">
+  <div class="modal-content">
+    <div class="modal-header">✅ Application Submitted!</div>
+    <div class="creator-id-display">
+      <div class="label">YOUR CREATOR ID</div>
+      <div class="id-value" id="generatedCreatorId">A01N00001</div>
+      <div class="status-text">⏳ PENDING APPROVAL</div>
+    </div>
+    <div style="background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.3); border-radius:12px; padding:14px; margin:14px 0;">
+      <div style="font-size:13px; font-weight:700; color:#f5a623; margin-bottom:6px;">📋 What happens next?</div>
+      <div style="font-size:12px; color:#ccc; line-height:1.6;">
+        • Your application is under review<br>
+        • Admin will verify your details<br>
+        • Once approved, your Creator ID will be activated<br>
+        • You'll receive a notification upon approval
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04); border-radius:12px; padding:14px; margin:14px 0;">
+      <div style="font-size:12px; color:#888; margin-bottom:8px; font-weight:600;">Application Summary:</div>
+      <div id="applicationSummary" style="font-size:12px; color:#ccc; line-height:1.8;"></div>
+    </div>
+    <button class="save-creator-btn" onclick="closeModal('creatorIdModal'); loadProfile();">✓ Got it, Back to Profile</button>
+  </div>
+</div>
+
+<!-- Admin Panel Modal -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-content">
+    <div class="modal-header">🛡️ Admin Panel - Pending Approvals</div>
+    <div id="adminPendingList"></div>
+    <div class="modal-cancel" onclick="closeModal('adminModal')">Close</div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-overlay" id="commentModal">
+  <div class="modal-content">
+    <div class="modal-header">Comments (0)</div>
+    <div id="commentsList">
+      <div style="text-align:center; color:#666; padding:30px 0; font-size:14px;">No comments yet. Be the first! 💬</div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
+      <input type="text" id="commentInput" placeholder="Add a comment..." style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:10px 16px; color:#fff; font-size:14px; font-family:'Poppins',sans-serif; outline:none;" onkeypress="handleCommentKey(event)">
+      <button style="width:40px; height:40px; border-radius:50%; background:#f5a623; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" onclick="postComment()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="#000"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="modal-cancel" onclick="closeModal('commentModal')">Close</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'creator_applications';
+  const COUNTER_KEY = 'creator_counter';
+  const PROFILE_KEY = 'user_profile';
+
+  function getApplications() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+  function saveApplications(apps) { localStorage.setItem(STORAGE_KEY, JSON.stringify(apps)); }
+  function getCounter() { try { return JSON.parse(localStorage.getItem(COUNTER_KEY)) || { batch: 1, sequence: 0 }; } catch { return { batch: 1, sequence: 0 }; } }
+  function saveCounter(counter) { localStorage.setItem(COUNTER_KEY, JSON.stringify(counter)); }
+  function getProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; } catch { return null; } }
+  function saveProfileData(data) { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); }
+
+  function previewCreatorId(name) {
+    const counter = getCounter();
+    const firstName = name.trim().charAt(0).toUpperCase();
+    const lastName = name.trim().split(/\s+/).pop().charAt(0).toUpperCase();
+    const nextSeq = counter.sequence + 1;
+    const batchStr = String(counter.batch).padStart(2, '0');
+    const seqStr = String(nextSeq).padStart(5, '0');
+    return `${firstName}${batchStr}${lastName}${seqStr}`;
+  }
+
+  function generateCreatorId(name) {
+    const counter = getCounter();
+    const firstName = name.trim().charAt(0).toUpperCase();
+    const lastName = name.trim().split(/\s+/).pop().charAt(0).toUpperCase();
+    counter.sequence++;
+    if (counter.sequence > 99999) { counter.sequence = 1; counter.batch++; }
+    const batchStr = String(counter.batch).padStart(2, '0');
+    const seqStr = String(counter.sequence).padStart(5, '0');
+    const creatorId = `${firstName}${batchStr}${lastName}${seqStr}`;
+    saveCounter(counter);
+    return creatorId;
+  }
+
+  function updateLiveCreatorId() {
+    const name = document.getElementById('creatorName').value.trim();
+    const liveBox = document.getElementById('liveCreatorIdBox');
+    const liveId = document.getElementById('liveCreatorId');
+    if (name.length >= 2) {
+      liveId.textContent = previewCreatorId(name);
+      liveId.classList.remove('placeholder');
+      liveBox.classList.add('active');
+    } else {
+      liveId.textContent = 'Enter name to generate ID';
+      liveId.classList.add('placeholder');
+      liveBox.classList.remove('active');
+    }
+  }
+
+  let isAgreeChecked = false;
+  function toggleAgreeCheckbox(event) {
+    if (event) event.stopPropagation();
+    isAgreeChecked = !isAgreeChecked;
+    document.getElementById('agreeCheckboxWrap').classList.toggle('checked', isAgreeChecked);
+  }
+
+  function openCreatorForm() {
+    const profile = getProfile();
+    if (profile && profile.status === 'approved') { showToast('✅ You are already an approved Creator!'); return; }
+    if (profile && profile.status === 'pending') { showToast('⏳ Your application is pending approval'); return; }
+    document.getElementById('creatorName').value = '';
+    document.getElementById('creatorHandle').value = '';
+    document.getElementById('creatorMobile').value = '';
+    document.getElementById('creatorEmail').value = '';
+    document.getElementById('creatorCategory').value = '';
+    document.getElementById('creatorLanguage').value = '';
+    document.getElementById('creatorAbout').value = '';
+    isAgreeChecked = false;
+    document.getElementById('agreeCheckboxWrap').classList.remove('checked');
+    document.getElementById('liveCreatorId').textContent = 'Enter name to generate ID';
+    document.getElementById('liveCreatorId').classList.add('placeholder');
+    document.getElementById('liveCreatorIdBox').classList.remove('active');
+    openModal('creatorModal');
+  }
+
+  function handleCreatorSubmit() {
+    const name = document.getElementById('creatorName').value.trim();
+    const handle = document.getElementById('creatorHandle').value.trim();
+    const mobile = document.getElementById('creatorMobile').value.trim();
+    const email = document.getElementById('creatorEmail').value.trim();
+    const category = document.getElementById('creatorCategory').value;
+    const language = document.getElementById('creatorLanguage').value;
+    const about = document.getElementById('creatorAbout').value.trim();
+    if (!name) { showToast('⚠️ Please enter Channel Name'); return; }
+    if (!handle) { showToast('⚠️ Please enter Handle'); return; }
+    if (!mobile) { showToast('⚠️ Please enter Mobile Number'); return; }
+    if (!email) { showToast('⚠️ Please enter Gmail ID'); return; }
+    if (!category) { showToast('⚠️ Please select Video Category'); return; }
+    if (!language) { showToast('⚠️ Please select Language'); return; }
+    if (!about) { showToast('⚠️ Please enter About details'); return; }
+    if (!isAgreeChecked) { showToast('⚠️ Please agree to the terms'); return; }
+    const creatorId = generateCreatorId(name);
+    const application = { id: creatorId, name, handle, mobile, email, category, language, about, status: 'pending', submittedAt: new Date().toISOString() };
+    const apps = getApplications();
+    apps.push(application);
+    saveApplications(apps);
+    saveProfileData(application);
+    document.getElementById('generatedCreatorId').textContent = creatorId;
+    document.getElementById('applicationSummary').innerHTML = `<div><strong>Name:</strong> <span>${name}</span></div><div><strong>Handle:</strong> <span>${handle}</span></div><div><strong>Email:</strong> <span>${email}</span></div><div><strong>Mobile:</strong> <span>${mobile}</span></div><div><strong>Category:</strong> <span>${category}</span></div><div><strong>Language:</strong> <span>${language}</span></div><div><strong>Creator ID:</strong> <span style="color:#818cf8;font-family:monospace;">${creatorId}</span></div>`;
+    closeModal('creatorModal');
+    setTimeout(() => { openModal('creatorIdModal'); }, 300);
+    loadProfile();
+    showToast('✅ Application submitted successfully!');
+  }
+
+  function loadProfile() {
+    const profile = getProfile();
+    const nameEl = document.getElementById('profileDisplayName');
+    const handleEl = document.getElementById('profileDisplayHandle');
+    const emailEl = document.getElementById('profileDisplayEmail');
+    const statusEl = document.getElementById('profileStatusBadge');
+    const statusText = document.getElementById('profileStatusText');
+    const idEl = document.getElementById('profileCreatorId');
+    const avatarEl = document.getElementById('profileAvatar');
+    const postsEl = document.getElementById('statPosts');
+    const uploadsEl = document.getElementById('analyticsUploads');
+
+    const posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+    if (postsEl) postsEl.textContent = posts.length;
+    if (uploadsEl) uploadsEl.textContent = posts.length + ' Uploads Total';
+
+    if (profile && profile.name) {
+      nameEl.textContent = profile.name;
+      handleEl.textContent = profile.handle;
+      emailEl.textContent = profile.email || '';
+      emailEl.style.display = profile.email ? 'block' : 'none';
+      if (profile.status === 'approved') {
+        statusEl.className = 'profile-status-badge status-approved';
+        statusText.textContent = '✓ VERIFIED CREATOR';
+        idEl.style.display = 'block';
+        idEl.textContent = 'ID: ' + profile.id;
+      } else if (profile.status === 'pending') {
+        statusEl.className = 'profile-status-badge status-pending';
+        statusText.textContent = '⏳ PENDING APPROVAL';
+        idEl.style.display = 'block';
+        idEl.textContent = 'ID: ' + profile.id;
+      } else {
+        statusEl.className = 'profile-status-badge status-none';
+        statusText.textContent = 'Not a Creator';
+        idEl.style.display = 'none';
+      }
+      const initial = profile.name.charAt(0).toUpperCase();
+      avatarEl.innerHTML = `<span style="font-size:32px;font-weight:800;color:#f5a623;">${initial}</span>`;
+    } else {
+      nameEl.textContent = 'Your Channel Name';
+      handleEl.textContent = '@username';
+      emailEl.textContent = '';
+      emailEl.style.display = 'none';
+      statusEl.className = 'profile-status-badge status-none';
+      statusText.textContent = 'Not a Creator';
+      idEl.style.display = 'none';
+      avatarEl.innerHTML = `<svg viewBox="0 0 24 24" fill="#f5a623" width="48" height="48"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>`;
+    }
+  }
+
+  function openAdminPanel() {
+    const apps = getApplications();
+    const pending = apps.filter(a => a.status === 'pending');
+    const list = document.getElementById('adminPendingList');
+    if (pending.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:30px 0;color:#888;"><div style="font-size:40px;margin-bottom:10px;">📭</div><div style="font-size:14px;">No pending applications</div></div>';
+    } else {
+      list.innerHTML = pending.map(app => `<div class="admin-pending-item"><div class="admin-pending-header"><div class="admin-pending-name">${app.name}</div><div class="admin-pending-id">${app.id}</div></div><div class="admin-pending-details"><div><strong>Handle:</strong> <span>${app.handle}</span></div><div><strong>Email:</strong> <span>${app.email}</span></div><div><strong>Mobile:</strong> <span>${app.mobile}</span></div><div><strong>Category:</strong> <span>${app.category}</span></div><div><strong>Language:</strong> <span>${app.language}</span></div></div><div class="admin-actions"><button class="admin-approve-btn" onclick="approveCreator('${app.id}')">✓ Approve</button><button class="admin-reject-btn" onclick="rejectCreator('${app.id}')">✗ Reject</button></div></div>`).join('');
+    }
+    openModal('adminModal');
+  }
+
+  function approveCreator(id) {
+    const apps = getApplications();
+    const app = apps.find(a => a.id === id);
+    if (app) {
+      app.status = 'approved';
+      saveApplications(apps);
+      const profile = getProfile();
+      if (profile && profile.id === id) { profile.status = 'approved'; saveProfileData(profile); }
+      showToast('✅ Creator approved: ' + id);
+      openAdminPanel();
+      loadProfile();
+    }
+  }
+
+  function rejectCreator(id) {
+    const apps = getApplications();
+    const app = apps.find(a => a.id === id);
+    if (app) {
+      app.status = 'rejected';
+      saveApplications(apps);
+      const profile = getProfile();
+      if (profile && profile.id === id) { profile.status = 'rejected'; saveProfileData(profile); }
+      showToast('❌ Creator rejected: ' + id);
+      openAdminPanel();
+      loadProfile();
+    }
+  }
+
+  // ===== PAGE SWITCHING =====
+  function switchPage(page) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    // Show selected page
+    document.getElementById(page + 'Page').classList.add('active');
+    // Update nav buttons
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.remove('active');
+      const svg = b.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', '#888');
+      }
+    });
+    const activeNav = document.getElementById('nav' + page.charAt(0).toUpperCase() + page.slice(1));
+    if (activeNav) {
+      activeNav.classList.add('active');
+      const svg = activeNav.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('fill', '#f5a623');
+        svg.removeAttribute('stroke');
+      }
+    }
+    // Load profile data when switching to profile
+    if (page === 'profile') loadProfile();
+    // Scroll to top
+    window.scrollTo(0, 0);
+  }
+
+  function switchToProfile() {
+    switchPage('profile');
+  }
+
+  // ===== VIDEO PLAYER =====
+  let isPlaying = true;
+  let isLiked = false;
+  let likeCountVal = 0;
+  let viewCountVal = 107;
+  let commentCountVal = 0;
+  let progressInterval;
+  let currentProgress = 0;
+  let lastTap = 0;
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    const playIcon = document.getElementById('playIconBig');
+    const pauseIcon = document.getElementById('pauseIcon');
+    if (isPlaying) {
+      playIcon.classList.remove('show');
+      pauseIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+      startProgress();
+    } else {
+      playIcon.classList.add('show');
+      pauseIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      stopProgress();
+      setTimeout(() => playIcon.classList.remove('show'), 800);
+    }
+  }
+
+  function startProgress() {
+    stopProgress();
+    progressInterval = setInterval(() => {
+      currentProgress += 0.33;
+      if (currentProgress >= 100) {
+        currentProgress = 0;
+        isPlaying = false;
+        document.getElementById('playIconBig').classList.add('show');
+        document.getElementById('pauseIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+        stopProgress();
+      }
+      document.getElementById('progressFill').style.width = currentProgress + '%';
+      const secs = Math.floor(currentProgress * 0.3);
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById('timeDisplay').textContent = `${m}:${s.toString().padStart(2,'0')} / 0:30`;
+    }, 100);
+  }
+
+  function stopProgress() { clearInterval(progressInterval); }
+
+  function seekVideo(e) {
+    const bar = document.getElementById('progressBar');
+    const rect = bar.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    currentProgress = Math.max(0, Math.min(100, pct));
+    document.getElementById('progressFill').style.width = currentProgress + '%';
+    const secs = Math.floor(currentProgress * 0.3);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    document.getElementById('timeDisplay').textContent = `${m}:${s.toString().padStart(2,'0')} / 0:30`;
+  }
+
+  function toggleLike() {
+    const btn = document.getElementById('likeBtn');
+    const svg = btn.querySelector('svg');
+    if (isLiked) {
+      isLiked = false;
+      likeCountVal--;
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', '#fff');
+      btn.classList.remove('liked');
+    } else {
+      isLiked = true;
+      likeCountVal++;
+      svg.setAttribute('fill', '#e74c3c');
+      svg.setAttribute('stroke', '#e74c3c');
+      btn.classList.add('liked');
+      svg.style.transform = 'scale(1.3)';
+      setTimeout(() => svg.style.transform = 'scale(1)', 200);
+    }
+    document.getElementById('likeCount').textContent = likeCountVal;
+  }
+
+  document.getElementById('playOverlay').addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      if (!isLiked) toggleLike();
+      showDoubleTapHeart(e);
+    }
+    lastTap = now;
+  });
+
+  function showDoubleTapHeart(e) {
+    const heart = document.getElementById('doubleTapHeart');
+    const container = document.getElementById('videoContainer');
+    const rect = container.getBoundingClientRect();
+    heart.style.left = (e.clientX - rect.left - 50) + 'px';
+    heart.style.top = (e.clientY - rect.top - 50) + 'px';
+    heart.classList.remove('fade');
+    heart.classList.add('show');
+    setTimeout(() => heart.classList.add('fade'), 400);
+    setTimeout(() => heart.classList.remove('show', 'fade'), 1000);
+  }
+
+  function showViews() { viewCountVal++; document.getElementById('viewCount').textContent = viewCountVal; }
+  function switchFeedTab(el) { document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); }
+  function toggleSound(btn) { showToast('🔊 Sound toggled'); }
+
+  function openComments() { openModal('commentModal'); }
+  function postComment() {
+    const input = document.getElementById('commentInput');
+    const text = input.value.trim();
+    if (!text) return;
+    commentCountVal++;
+    document.getElementById('commentCount').textContent = commentCountVal;
+    document.querySelector('#commentModal .modal-header').textContent = 'Comments (' + commentCountVal + ')';
+    const list = document.getElementById('commentsList');
+    if (commentCountVal === 1) list.innerHTML = '';
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);';
+    item.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f5a623,#e6951a);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">U</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#f5a623;">You</div><div style="font-size:13px;color:#ccc;margin-top:2px;">${text}</div><div style="font-size:11px;color:#666;margin-top:4px;">Just now</div></div>`;
+    list.prepend(item);
+    input.value = '';
+  }
+  function handleCommentKey(e) { if (e.key === 'Enter') postComment(); }
+
+  function shareVideo() {
+    if (navigator.share) {
+      navigator.share({ title: 'Check this video!', url: window.location.href }).catch(() => {});
+    } else {
+      showToast('📤 Share link copied!');
+    }
+  }
+
+  // ===== UPLOAD MODAL =====
+  let currentUploadTab = 'regular';
+  let selectedFile = null;
+
+  function openUploadModal() {
+    document.getElementById('uploadModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeUploadModal() {
+    document.getElementById('uploadModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchUploadTab(tab) {
+    currentUploadTab = tab;
+    document.getElementById('tabRegular').classList.toggle('active', tab === 'regular');
+    document.getElementById('tabPromote').classList.toggle('active', tab === 'promote');
+  }
+  function selectVideo() { document.getElementById('videoFileInput').click(); }
+  function selectPhoto() { document.getElementById('photoFileInput').click(); }
+  function handleVideoSelect(event) {
+    const file = event.target.files[0];
+    if (file) { selectedFile = file; showFilePreview(file, 'video'); showToast('📹 Video selected: ' + file.name); }
+  }
+  function handlePhotoSelect(event) {
+    const file = event.target.files[0];
+    if (file) { selectedFile = file; showFilePreview(file, 'photo'); showToast('🖼️ Photo selected: ' + file.name); }
+  }
+  function handleAudioSelect(event) {
+    const file = event.target.files[0];
+    if (file) { document.getElementById('soundTitle').value = file.name.replace(/\.[^/.]+$/, ''); showToast('🎵 Audio attached: ' + file.name); }
+  }
+  function showFilePreview(file, type) {
+    const preview = document.getElementById('filePreview');
+    document.getElementById('filePreviewName').textContent = file.name;
+    document.getElementById('filePreviewSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+    const iconSvg = document.getElementById('filePreviewIconSvg');
+    iconSvg.innerHTML = type === 'video' ? '<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>' : '<path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>';
+    preview.classList.add('show');
+  }
+  function removeFile() {
+    selectedFile = null;
+    document.getElementById('filePreview').classList.remove('show');
+    document.getElementById('videoFileInput').value = '';
+    document.getElementById('photoFileInput').value = '';
+    showToast('🗑️ File removed');
+  }
+  function attachAudio() { document.getElementById('audioFileInput').click(); }
+  function newSeries() {
+    const seriesName = prompt('Enter new series name:');
+    if (seriesName) {
+      const select = document.getElementById('seriesSelect');
+      const option = document.createElement('option');
+      option.textContent = seriesName + ' — Episode 1';
+      select.appendChild(option);
+      select.value = option.textContent;
+      showToast('📺 New series created: ' + seriesName);
+    }
+  }
+  function publishNow() {
+    if (!selectedFile) { showToast('⚠️ Please select a video or photo first'); return; }
+    const caption = document.getElementById('uploadCaption').value.trim();
+    const soundTitle = document.getElementById('soundTitle').value.trim();
+    const posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+    posts.push({ id: Date.now(), fileName: selectedFile.name, fileType: selectedFile.type, caption, soundTitle, uploadType: currentUploadTab, views: 0, likes: 0, shares: 0, createdAt: new Date().toISOString() });
+    localStorage.setItem('user_posts', JSON.stringify(posts));
+    const profile = getProfile();
+    if (profile) { profile.posts = (profile.posts || 0) + 1; saveProfileData(profile); }
+    showToast('🎉 Published successfully!');
+    closeUploadModal();
+    loadProfile();
+    selectedFile = null;
+    document.getElementById('filePreview').classList.remove('show');
+    document.getElementById('uploadCaption').value = '';
+    document.getElementById('videoFileInput').value = '';
+    document.getElementById('photoFileInput').value = '';
+  }
+
+  // ===== MODAL HELPERS =====
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) {
+        if (m.id === 'uploadModal') closeUploadModal();
+        else closeModal(m.id);
+      }
+    });
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // Admin shortcut - triple tap wallet
+  let walletTapCount = 0;
+  document.querySelector('.profile-wallet-btn').addEventListener('click', () => {
+    walletTapCount++;
+    if (walletTapCount >= 3) { walletTapCount = 0; openAdminPanel(); }
+    setTimeout(() => { walletTapCount = 0; }, 1000);
+  });
+
+  // Start video progress
+  startProgress();
+
+  // Load profile on start
+  loadProfile();
+</script>
+</body>
+</html>
